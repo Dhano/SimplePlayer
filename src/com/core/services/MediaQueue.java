@@ -33,4 +33,9 @@ public class MediaQueue {
     public ListIterator<MediaPlayer> listIterator(){
         return mediaList.listIterator();
     }
+
+    public int size(){
+        return mediaList.size();
+    }
+
 }
