@@ -23,10 +23,10 @@ public class MediaReader {
     private void fetch(){
         int i=0;
 
-        for (File root:roots) {
-            mediaLocators[i++]=new MediaLocator(mediaTypes,mediaQueue,root);
-            System.out.println("Thread for"+root.getPath());
-        }
+        //for (File root:roots) {
+            mediaLocators[i]=new MediaLocator(mediaTypes,mediaQueue,roots[1]);
+            System.out.println("Thread for"+roots[1].getPath());
+        //}
     }
 
     public boolean isComplete(){
