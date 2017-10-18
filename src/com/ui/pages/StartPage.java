@@ -3,6 +3,8 @@ package com.ui.pages;
 import com.core.MediaReader;
 import com.ui.pages.contants.DefaultController;
 import com.ui.pages.contants.SongButton;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,7 +28,7 @@ public class StartPage implements DefaultController {
     Button btn_Start;
     MediaReader mediaReader;
 
-    /*+++++++++++++++++++++SONGS LIST++++++++++++++++++++++++++*/
+    /*+++++++++++++++++++++SONGSLIST++++++++++++++++++++++++++*/
     @FXML
     ListView<SongButton> songsList;
     ObservableList<SongButton> observableList;
@@ -38,11 +40,6 @@ public class StartPage implements DefaultController {
     @FXML
     Slider progressSlider,volumeSlider;
     SongButton currentSong;
-
-    DoubleProperty progressProperty;
-    DoubleProperty volumeProperty;
-
-
 
 
 
@@ -77,6 +74,12 @@ public class StartPage implements DefaultController {
 
             for(int i=0;i<mediaReader.getMediaQueue().size();i++){
                 MediaPlayer mediaPlayer=mediaReader.getMediaQueue().get(i);
+                mediaPlayer.currentTimeProperty().addListener(new InvalidationListener() {
+                    @Override
+                    public void invalidated(Observable observable) {
+                        updateValues();
+                    }
+                });
                 SongButton songButton=new SongButton(mediaPlayer);
                 songButton.setOnAction(new EventHandler<ActionEvent>() {
                     @Override
@@ -93,9 +96,8 @@ public class StartPage implements DefaultController {
 
     public void initializePlayingPanel(){
         try{
-            progressProperty=progressSlider.valueProperty();
-            volumeProperty=volumeSlider.valueProperty();
             playingPanel.setVisible(false);
+            progressSlider.setMinWidth(50);
             btn_Play.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent event) {
@@ -117,6 +119,25 @@ public class StartPage implements DefaultController {
                 @Override
                 public void handle(ActionEvent event) {
                     previousSong();
+                }
+            });
+
+            progressSlider.valueProperty().addListener(new InvalidationListener() {
+                @Override
+                public void invalidated(Observable observable) {
+                    if(progressSlider.isValueChanging())
+                    {
+                        currentSong.getMediaPlayer().seek( currentSong.getMediaPlayer().getTotalDuration().multiply(progressSlider.getValue() / 100.0));
+                    }
+                }
+            });
+
+            volumeSlider.valueProperty().addListener(new InvalidationListener() {
+                @Override
+                public void invalidated(Observable observable) {
+                    if(volumeSlider.isValueChanging()){
+                        currentSong.getMediaPlayer().setVolume(volumeSlider.getValue()/100);
+                    }
                 }
             });
         }
@@ -141,6 +162,12 @@ public class StartPage implements DefaultController {
         songsListPanel.setVisible(false);
     }
 
+    void showPlayingPanel(ActionEvent actionEvent){
+        playingPanel.setVisible(true);
+        currentSong=((SongButton)actionEvent.getSource());
+        playSong();
+
+    }
 
     /**************************************************PLAYING PANEL***************************************************************/
 
@@ -148,12 +175,13 @@ public class StartPage implements DefaultController {
         playingPanel.setVisible(false);
     }
 
-    void showPlayingPanel(ActionEvent actionEvent){
-        playingPanel.setVisible(true);
-        currentSong=((SongButton)actionEvent.getSource());
-        playSong();
 
+    private void updateValues(){
+        /*Code to update the song seek according to the slider*/
+        progressSlider.setValue(currentSong.getMediaPlayer().getCurrentTime().divide(currentSong.getMediaPlayer().getTotalDuration().toMillis()).toMillis()* 100.0);
     }
+
+
 
     SongButton getNextSong(){
         int index=observableList.indexOf(currentSong);
@@ -170,7 +198,6 @@ public class StartPage implements DefaultController {
     }
 
     void playSong(){
-        //progressProperty.bindBidirectional(currentSong.getMediaPlayer().cycleDurationProperty());
         currentSong.getMediaPlayer().play();
     }
 
